@@ -8,7 +8,7 @@ public class S17challengeApplication {
 
 	public static void main(String[] args) {
 		SpringApplication.run(S17challengeApplication.class, args);
-		System.out.printf("say hi");
+		System.out.println("say hi");
 	}
 
 }
