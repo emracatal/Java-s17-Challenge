@@ -2,17 +2,21 @@ package com.wit.s17challenge.controller;
 
 import com.wit.s17challenge.dto.CourseResponse;
 import com.wit.s17challenge.dto.CourseResponseFactory;
+import com.wit.s17challenge.exeptions.CourseException;
+import com.wit.s17challenge.exeptions.CourseValidation;
 import com.wit.s17challenge.model.Course;
 import com.wit.s17challenge.model.CourseGpa;
 import jakarta.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+@CrossOrigin("*") //CORS exceptiona karşı
 @RestController//controlleri spring containere tanıt ve build sırasında courseController instance oluşturur
 @RequestMapping("/courses")
 public class CourseController {
@@ -45,21 +49,22 @@ public class CourseController {
         if (optionalCourse.isPresent()) {
             return optionalCourse.get();
         } else {
-            //TODO THROW COURSE NOT FOUND EXCEPTION
-            return null;
+           throw new CourseException("Course with given name is not exist: "+name, HttpStatus.NOT_FOUND);
         }
     }
 
     @PostMapping("/")
     public CourseResponse save(@RequestBody Course course) {
-        //TODO VALIDATION
-        courses.add(course);
+        CourseValidation.isIdValid(course.getId());
+        CourseValidation.isDuplicateNameFound(courses,course.getName());
+        CourseValidation.checkCourseIsValid(course);
+    courses.add(course);
         return CourseResponseFactory.createCourseResponse(course, low, medium, high);
     }
 
     @PutMapping("/{id}")
     public Course update(@RequestBody Course course, @PathVariable int id) {
-        //TODO VALIDATION
+        CourseValidation.checkCourseIsValid(course);
         Optional<Course> optionalCourse = courses.stream().filter(c -> c.getId() == id).findFirst();
         if (optionalCourse.isPresent()) {
             int index = courses.indexOf(optionalCourse.get());
@@ -67,9 +72,8 @@ public class CourseController {
             courses.set(index, course);
             return course;
         } else {
-            //TODO THROW EXCEPTION
+            throw new CourseException("Course with given id is not exist: "+id, HttpStatus.NOT_FOUND);
         }
-        return null;
     }
 
     @DeleteMapping("/{id}")
@@ -80,8 +84,7 @@ public class CourseController {
             courses.remove(index);
             return optionalCourse.get();
         }else{
-            //THROW EXCEPTION
+            throw new CourseException("Course with given id is not exist: "+id, HttpStatus.NOT_FOUND);
         }
-        return null;
     }
 }
